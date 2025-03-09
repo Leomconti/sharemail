@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= email.subject %></title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .email-container {
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 20px;
+        background-color: #fff;
+      }
+      .email-header {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+      }
+      .email-subject {
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+      .email-meta {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 5px;
+      }
+      .email-content {
+        padding: 10px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-container">
+      <div class="email-header">
+        <h1 class="email-subject"><%= email.subject %></h1>
+        <p class="email-meta"><strong>From:</strong> <%= email.from %></p>
+        <p class="email-meta"><strong>Date:</strong> <%= email.date.toLocaleString() %></p>
+      </div>
+      <div class="email-content">
+        <% if (email.html) { %> <%- email.html %> <% } else { %>
+        <pre><%= email.text %></pre>
+        <% } %>
+      </div>
+    </div>
+  </body>
+</html>
