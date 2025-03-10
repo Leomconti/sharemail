@@ -1,39 +1,43 @@
-FROM node:20
+# Build stage
+FROM node:20-alpine AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Install build dependencies for sqlite3
-RUN apt-get update && apt-get install -y \
+# Install build dependencies
+RUN apk update && apk add --no-cache \
+    sqlite \
+    sqlite-dev \
     python3 \
     make \
-    gcc \
     g++ \
-    libc6-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install pnpm globally
-RUN npm install -g pnpm
+    linux-headers \
+    && npm install -g pnpm
 
 # Copy package files
 COPY package.json pnpm-lock.yaml* ./
 
-# Install dependencies WITHOUT frozen lockfile
-RUN pnpm install --no-frozen-lockfile \
+# Install dependencies and explicitly build sqlite3
+RUN pnpm install --frozen-lockfile \
     && pnpm add sqlite3 --save \
-    && pnpm rebuild sqlite3
+    && cd node_modules/.pnpm/sqlite3*/node_modules/sqlite3 \
+    && npm rebuild --build-from-source
 
-# Copy the rest of your application code
+# Final stage
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install runtime dependencies
+RUN apk update && apk add --no-cache \
+    sqlite \
+    && npm install -g pnpm
+
+# Copy built node_modules and app files from builder
+COPY --from=builder /app/node_modules ./node_modules
 COPY . .
 
-# Create a directory for the SQLite database
-RUN mkdir -p /app/data
-
-# Set environment variable for database path
-ENV SQLITE_DB_PATH=/app/data/database.db
-
-# Expose the port your app runs on
+# Expose port
 EXPOSE 3000
 
-# Command to run your application (updated to use server.js as per your error)
-CMD ["pnpm", "start"]
+# Start the app
+CMD ["node", "server.js"]
