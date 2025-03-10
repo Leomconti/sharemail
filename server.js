@@ -227,33 +227,40 @@ async function checkEmails() {
     client = await createImapClient();
     await client.connect();
 
-    // Select and lock the mailbox
-    const lock = await client.getMailboxLock("INBOX");
+    // Define mailboxes to check
+    const mailboxes = ["INBOX", "[Gmail]/Spam"];
 
-    try {
-      // Search for unread messages
-      const messages = await client.search({ seen: false });
+    for (const mailbox of mailboxes) {
+      console.log(`Checking mailbox: ${mailbox}`);
 
-      console.log(`Found ${messages.length} unread messages`);
+      // Select and lock the mailbox
+      const lock = await client.getMailboxLock(mailbox);
 
-      for (const message of messages) {
-        // Fetch the full message
-        const fetchedMsg = await client.fetchOne(message, { source: true });
+      try {
+        // Search for unread messages
+        const messages = await client.search({ seen: false });
 
-        if (fetchedMsg && fetchedMsg.source) {
-          // Parse email
-          const email = await simpleParser(fetchedMsg.source);
+        console.log(`Found ${messages.length} unread messages in ${mailbox}`);
 
-          // Process the email
-          await processEmail(email);
+        for (const message of messages) {
+          // Fetch the full message
+          const fetchedMsg = await client.fetchOne(message, { source: true });
 
-          // Mark as seen/read
-          await client.messageFlagsAdd(message, ["\\Seen"]);
+          if (fetchedMsg && fetchedMsg.source) {
+            // Parse email
+            const email = await simpleParser(fetchedMsg.source);
+
+            // Process the email
+            await processEmail(email);
+
+            // Mark as seen/read
+            await client.messageFlagsAdd(message, ["\\Seen"]);
+          }
         }
+      } finally {
+        // Always release the lock
+        lock.release();
       }
-    } finally {
-      // Always release the lock
-      lock.release();
     }
 
     // Close the connection
