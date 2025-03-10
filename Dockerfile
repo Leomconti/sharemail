@@ -1,13 +1,8 @@
 FROM node:20
 
-# Update package list and install required dependencies
-RUN apt-get update && apt-get install -y \
-    python3 \
-    make \
-    gcc \
-    g++ \
-    libc6-dev \
-    && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get -y install sqlite3 libsqlite3-dev
+
 
 # Set working directory
 WORKDIR /app
