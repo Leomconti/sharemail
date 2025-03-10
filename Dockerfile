@@ -6,7 +6,7 @@ RUN npm install -g pnpm
 
 COPY . .
 
-RUN pnpm install --frozen-lockfile
+RUN pnpm install
 
 # Create a volume for the database
 VOLUME /app/data
