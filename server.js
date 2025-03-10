@@ -101,7 +101,9 @@ async function getAccessToken(oauth2Client) {
         const server = http
           .createServer(async (req, res) => {
             try {
-              const parsedUrl = new url.URL(req.url, `http://localhost:${port}`);
+              // Use the configured redirect URI instead of localhost
+              const redirectUri = process.env.GOOGLE_REDIRECT_URI;
+              const parsedUrl = new url.URL(req.url, redirectUri);
               const qs = parsedUrl.searchParams;
 
               // Check if this is the correct callback path
