@@ -3,15 +3,17 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install build dependencies
+# Install build dependencies, including python3 with distutils
 RUN apk update && apk add --no-cache \
     sqlite \
     sqlite-dev \
     python3 \
+    py3-pip \
     make \
     g++ \
     linux-headers \
-    && npm install -g pnpm
+    && npm install -g pnpm \
+    && ln -sf python3 /usr/bin/python
 
 # Copy package files
 COPY package.json pnpm-lock.yaml* ./
