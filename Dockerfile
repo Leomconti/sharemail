@@ -1,4 +1,4 @@
-FROM node:20-slim
+FROM node:20
 
 # Set working directory
 WORKDIR /app
@@ -19,7 +19,9 @@ RUN npm install -g pnpm
 COPY package.json pnpm-lock.yaml* ./
 
 # Install dependencies WITHOUT frozen lockfile
-RUN pnpm install --no-frozen-lockfile
+RUN pnpm install --no-frozen-lockfile \
+    && pnpm add sqlite3 --save \
+    && pnpm rebuild sqlite3
 
 # Copy the rest of your application code
 COPY . .
