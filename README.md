@@ -1,5 +1,10 @@
 # Share Mail
 
+https://share.mosmn.com.br/
+
+https://share.mosmn.com.br/email/b577f283-6b99-487f-8c5b-399d210043ed
+
+
 Had this idea because I received a very nice email update of an application we use at work, and wanted to share with the team.
 I didn't want to forward to each one of them, so I created this to give them a link to access it.
 
