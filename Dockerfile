@@ -1,5 +1,12 @@
 FROM node:20-slim
 
+RUN apt-update && apt-get install -y \
+    python3 \
+    make \
+    gcc \
+    g++ \
+    libc6-dev
+
 WORKDIR /app
 
 RUN npm install -g pnpm
