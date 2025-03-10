@@ -1,43 +1,34 @@
-FROM node:20
+FROM node:20-slim
 
+# Install essential build tools
+RUN apt-get update && apt-get install -y \
+    python3 \
+    build-essential \
+    sqlite3
 
-# dependencies
-RUN \
-  apt-get update && \
-  apt-get -y install \
-  build-essential \
-  curl \
-  git-core \
-  python-software-properties \
-  libcurl4-openssl-dev \
-  libc6-dev \
-  libreadline-dev \
-  libssl-dev \
-  libxml2-dev \
-  libxslt1-dev \
-  libyaml-dev \
-  zlib1g-dev
-
-RUN apt-get -y install sqlite3 libsqlite3-dev
-
-
-# Set working directory
 WORKDIR /app
 
-# Install pnpm globally
+# Install pnpm
 RUN npm install -g pnpm
 
-# Copy all files from the current directory to the container
-COPY . .
+# Copy package files
+COPY package.json pnpm-lock.yaml* ./
 
-# Install project dependencies using pnpm
-RUN pnpm install
+# Force rebuilding sqlite3 for the current Node.js version
+RUN npm config set sqlite3_binary_host_mirror=https://mapbox-node-binary.s3.amazonaws.com/ \
+    && npm config set sqlite3_binary_site=https://mapbox-node-binary.s3.amazonaws.com/sqlite3
+
+# Install dependencies with specific rebuild for sqlite3
+RUN pnpm install --no-frozen-lockfile
+RUN pnpm rebuild sqlite3 --build-from-source
+
+# Copy the rest of the application
+COPY . .
 
 # Create a volume for the database
 VOLUME /app/data
 
-# Set environment variable for SQLite database path
+# Make sure the application uses the volume path
 ENV SQLITE_DB_PATH=/app/data/emails.db
 
-# Command to run the application
 CMD ["pnpm", "run", "start"]
