@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y \
 COPY package.json pnpm-lock.yaml* ./
 
 # Install dependencies and ensure sqlite3 is built from source
-RUN pnpm install --frozen-lockfile \
+RUN pnpm install \
     && pnpm add sqlite3 --save \
     && pnpm rebuild sqlite3
 
