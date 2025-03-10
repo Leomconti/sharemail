@@ -1,22 +1,25 @@
-FROM node:20-slim
-
-# Install essential build tools
-RUN apt-get update && apt-get install -y \
-    python3 \
-    build-essential \
-    sqlite3
+FROM node:20-alpine
 
 WORKDIR /app
 
-# Install pnpm
+RUN apk update && apk add --no-cache \
+    sqlite \
+    sqlite-dev \
+    python3 \
+    make \
+    g++ \
+    && npm install -g npm
+
+
 RUN npm install -g pnpm
 
 # Copy package files
 COPY package.json pnpm-lock.yaml* ./
 
-RUN pnpm install
+# Install dependencies including sqlite
+RUN pnpm install sqlite3 --save
 
-# Copy the rest of the application
+# Copy the rest of your application code
 COPY . .
 
 # Create a volume for the database
