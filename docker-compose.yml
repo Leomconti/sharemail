@@ -4,7 +4,6 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3000:3000" # Main application port
       - "3001:3001" # OAuth callback port
     environment:
       - SQLITE_DB_PATH=/app/data/emails.db
