@@ -14,13 +14,7 @@ RUN npm install -g pnpm
 # Copy package files
 COPY package.json pnpm-lock.yaml* ./
 
-# Force rebuilding sqlite3 for the current Node.js version
-RUN npm config set sqlite3_binary_host_mirror=https://mapbox-node-binary.s3.amazonaws.com/ \
-    && npm config set sqlite3_binary_site=https://mapbox-node-binary.s3.amazonaws.com/sqlite3
-
-# Install dependencies with specific rebuild for sqlite3
-RUN pnpm install --no-frozen-lockfile
-RUN pnpm rebuild sqlite3 --build-from-source
+RUN pnpm install
 
 # Copy the rest of the application
 COPY . .
