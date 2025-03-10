@@ -1,6 +1,23 @@
 FROM node:20
 
 
+# dependencies
+RUN \
+  apt-get update && \
+  apt-get -y install \
+  build-essential \
+  curl \
+  git-core \
+  python-software-properties \
+  libcurl4-openssl-dev \
+  libc6-dev \
+  libreadline-dev \
+  libssl-dev \
+  libxml2-dev \
+  libxslt1-dev \
+  libyaml-dev \
+  zlib1g-dev
+
 RUN apt-get -y install sqlite3 libsqlite3-dev
 
 
