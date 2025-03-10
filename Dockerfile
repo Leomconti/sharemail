@@ -1,17 +1,16 @@
-# Use official Node.js runtime as base image (using 20 since your error shows v20.18.3)
-FROM node:20-alpine
+FROM node:20-slim
 
 # Set working directory
 WORKDIR /app
 
 # Install SQLite3 and build dependencies
-RUN apk update && apk add --no-cache \
-    sqlite \
-    sqlite-dev \
+RUN apt-get update && apt-get install -y \
     python3 \
     make \
+    gcc \
     g++ \
-    && npm install -g pnpm
+    libc6-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy package.json and pnpm-lock.yaml
 COPY package.json pnpm-lock.yaml* ./
