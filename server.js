@@ -9,6 +9,8 @@ const { OAuth2Client } = require("google-auth-library");
 const fs = require("fs");
 const http = require("http");
 const url = require("url");
+const sqlite3 = require("sqlite3").verbose();
+const { open } = require("sqlite");
 
 // Load environment variables
 dotenv.config();
@@ -20,8 +22,29 @@ app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-// In-memory email storage
-const emailStore = new Map();
+// Database setup
+let db;
+async function setupDatabase() {
+  const dbPath = process.env.SQLITE_DB_PATH || "emails.db";
+
+  db = await open({
+    filename: dbPath,
+    driver: sqlite3.Database,
+  });
+
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS emails (
+      uuid TEXT PRIMARY KEY,
+      subject TEXT,
+      from_address TEXT,
+      to_address TEXT,
+      html TEXT,
+      text_content TEXT,
+      date TEXT
+    )
+  `);
+  console.log(`Database initialized at ${dbPath}`);
+}
 
 // Initialize email client - Resend for sending emails
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -257,16 +280,12 @@ async function processEmail(email) {
     // Extract email content
     const { subject, from, to, html, text, date } = email;
 
-    // Save to in-memory store
-    emailStore.set(uuid, {
-      uuid,
-      subject,
-      from: from.value[0].address,
-      to: to.value[0].address,
-      html,
-      text,
-      date: date || new Date(),
-    });
+    // Save to database
+    await db.run(
+      `INSERT INTO emails (uuid, subject, from_address, to_address, html, text_content, date)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [uuid, subject, from.value[0].address, to.value[0].address, html, text, (date || new Date()).toISOString()]
+    );
 
     // Create public URL
     const publicUrl = `${process.env.APP_URL}/email/${uuid}`;
@@ -292,7 +311,10 @@ async function processEmail(email) {
 // Route to display emails
 app.get("/email/:uuid", async (req, res) => {
   try {
-    const email = emailStore.get(req.params.uuid);
+    const email = await db.get(
+      'SELECT uuid, subject, from_address as "from", to_address as "to", html, text_content as text, date FROM emails WHERE uuid = ?',
+      req.params.uuid
+    );
 
     if (!email) {
       return res.status(404).render("404", { message: "Email not found" });
@@ -306,8 +328,14 @@ app.get("/email/:uuid", async (req, res) => {
 });
 
 // Optional: Add a simple homepage
-app.get("/", (req, res) => {
-  res.render("home", { emailCount: emailStore.size });
+app.get("/", async (req, res) => {
+  try {
+    const count = await db.get("SELECT COUNT(*) as count FROM emails");
+    res.render("home", { emailCount: count.count });
+  } catch (error) {
+    console.error("Error counting emails:", error);
+    res.render("home", { emailCount: 0 });
+  }
 });
 
 // Start server
@@ -315,11 +343,14 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
 
-  // Initialize OAuth and start checking emails
+  // Initialize database
   try {
+    await setupDatabase();
+
+    // Initialize OAuth and start checking emails
     await getAuthenticatedClient();
     checkEmails();
   } catch (error) {
-    console.error("Failed to initialize OAuth:", error);
+    console.error("Failed to initialize:", error);
   }
 });
